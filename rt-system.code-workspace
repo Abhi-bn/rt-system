@@ -46,7 +46,8 @@
 			"type_traits": "cpp",
 			"utility": "cpp",
 			"typeinfo": "cpp",
-			"thread": "cpp"
+			"thread": "cpp",
+			"condition_variable": "cpp"
 		}
 	}
 }
