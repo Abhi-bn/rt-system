@@ -4,6 +4,7 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
+                "/usr/include/opencv4",
                 "${LIBLITMUS}/include",
                 "${LIBLITMUS}/arch/x86/include",
                 "${LIBLITMUS}/arch/x86/include/uapi"

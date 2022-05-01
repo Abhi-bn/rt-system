@@ -12,14 +12,15 @@ using namespace cv;
 using namespace std;
 using namespace cv::ml;
 RNG rng(12345);
-RT_SVM::RT_SVM() {
+RT_SVM::RT_SVM(std::string model_path) {
     hog = cv::HOGDescriptor(Size(128, 64), Size(16, 16), Size(8, 8), Size(8, 8),
                             9);
     svm_model = SVMModelOpencv();
+    svm_model.load_model(model_path);
     bg = cv::createBackgroundSubtractorMOG2(100, 50, true);
 }
 
-void RT_SVM::training(const std::vector<std::string> &datasets_path, const std::vector<float> &labels) {
+void RT_SVM::training(const std::vector<std::string>& datasets_path, const std::vector<float>& labels) {
     std::vector<std::vector<float>> feature_set;
     for (size_t i = 0; i < datasets_path.size(); i++) {
         cv::Mat im = imread(datasets_path[i], IMREAD_GRAYSCALE);
@@ -37,7 +38,7 @@ void RT_SVM::load_model(std::string s) {
     svm_model.load_model(s);
 }
 
-void RT_SVM::convulation(const cv::Mat &image, std::vector<cv::Rect> &rects, float dh, float dw) {
+void RT_SVM::convulation(const cv::Mat& image, std::vector<cv::Rect>& rects, float dh, float dw) {
     cv::Size w_s = cv::Size(128, 64);
     cv::Mat dimage;
     resize(image, dimage, Size(0, 0), dh, dw);
@@ -50,14 +51,14 @@ void RT_SVM::convulation(const cv::Mat &image, std::vector<cv::Rect> &rects, flo
             pre_processing(dimage(rect), des);
             int label = svm_model.recognise(des);
             if (label == 1) {
-                // imshow("out", dimage(rect));
+                imshow("out", dimage(rect));
                 rects.push_back(Rect(j / dw, i / dh, w_s.width / dw, w_s.height / dh));
             }
         }
     }
 }
 
-void RT_SVM::get_foreground(const cv::Mat &input, cv::Mat &grey) {
+void RT_SVM::get_foreground(const cv::Mat& input, cv::Mat& output) {
     cv::Mat image;
     // GaussianBlur(input, image, Size(5, 5), 1, 1);
     bg->apply(input, image);
@@ -75,30 +76,30 @@ void RT_SVM::get_foreground(const cv::Mat &input, cv::Mat &grey) {
             continue;
 
         cv::Rect rect = boundingRect(contours[i]);
+        // if ((float)contours[i].size() / (float)rect.area() > 0.1)
+        //     continue;
+
         Scalar color = Scalar(rng.uniform(0, 256), rng.uniform(0, 256), rng.uniform(0, 256));
         drawContours(drawing, contours, (int)i, color, -1, LINE_8, hierarchy, 0);
         drawContours(gray, contours, (int)i, Scalar(255), -1, LINE_8, hierarchy, 0);
     }
-    grey = gray;
+    output = gray;
 }
 
-cv::Mat RT_SVM::inference(const cv::Mat &input) {
-    Mat forground, drawing = input.clone();
-    get_foreground(input, forground);
-    Mat gray = Mat::zeros(input.size(), CV_8UC1);
+void RT_SVM::inference(const cv::Mat& input, const cv::Mat& forground, cv::Mat& output) {
+    Mat drawing = input.clone();
+    Mat gray = Mat::zeros(forground.size(), CV_8UC1);
     vector<Rect> obj_locations;
     vector<vector<Point>> contours;
     vector<cv::Vec4i> hierarchy;
     findContours(forground, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE);
-
     for (size_t i = 0; i < contours.size(); i++) {
         if (contours[i].size() < 50)
             continue;
 
         cv::Rect rect = boundingRect(contours[i]);
         expandRectBy(rect, rect, 0.1);
-        if (!isInside(cv::Rect(0, 0, input.cols - 1, input.rows - 1), rect))
-            continue;
+        if (!isInside(cv::Rect(0, 0, input.cols - 1, input.rows - 1), rect)) continue;
         drawContours(gray, contours, (int)i, Scalar(255), -1, LINE_8, hierarchy, 0);
 
         std::vector<float> des;
@@ -110,12 +111,12 @@ cv::Mat RT_SVM::inference(const cv::Mat &input) {
         }
     }
 
-    for (size_t i = 0; i < obj_locations.size(); i++)
+    for (size_t i = 0; i < obj_locations.size(); i++) {
         rectangle(drawing, obj_locations[i], cv::Scalar(255, 0, 0));
-
+    }
+    output = drawing;
     // imshow("gray", forground);
     // imshow("drawing", drawing);
     // imshow("gray1", gray);
-    // waitKey(0);
-    return drawing;
+    // waitKey(1);
 }

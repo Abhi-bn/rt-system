@@ -4,7 +4,10 @@
  * Author: Abhinava B N
  */
 
+#ifdef LITMUS_H
 #include <litmus.h>
+#endif
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -31,9 +34,9 @@
 
 void prep_data(std::vector<std::string> &img_path, std::vector<float> &labels) {
     std::vector<cv::String> pos;
-    glob("photos/processed/*", pos);
+    cv::glob("photos/processed/*", pos);
     std::vector<cv::String> neg;
-    glob("photos/neg/*", neg);
+    cv::glob("photos/neg/*", neg);
 
     for (size_t i = 0; i < pos.size(); i++) {
         img_path.push_back(pos.at(i));
@@ -48,7 +51,7 @@ void prep_data(std::vector<std::string> &img_path, std::vector<float> &labels) {
 
 void test_data(RT_SVM *rt) {
     std::vector<cv::String> test;
-    glob("data/test/*", test);
+    cv::glob("data/test/*", test);
     for (size_t i = 0; i < test.size(); i++) {
         cv::Mat res = cv::imread(test[i]);
         cv::resize(res, res, cv::Size(), 0.5, 0.5);

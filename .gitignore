@@ -1,10 +1,12 @@
-*.bin
-*.jpg
-*.jpeg
 *
 !*/
 !*.*
 !Makefile
+
+*.png
+*.jpg
+*.jpeg
+*.bin
 
 # Prerequisites
 *.d
