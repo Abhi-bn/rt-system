@@ -18,6 +18,16 @@ vpath %.c src/
 # local include files
 CPPFLAGS += -Iinclude/
 
+##################################################
+INCLUDES = -I src/video-processing/ `pkg-config --cflags --libs opencv` ${CPPFLAGS} -L${LIBLITMUS} -llitmus
+CC = g++
+COMPILE_FLAGS = -std=c++11 -Wall -g
+SRCS = src/main.cpp src/video-processing/*.cpp
+TARGET = runnable
+
+video-p: 
+	$(CC) ${COMPILE_FLAGS} ${SRCS} ${INCLUDES} -o ${TARGET}
+
 # ##############################################################################
 # Targets
 all = mytool
@@ -25,10 +35,10 @@ all = mytool
 .PHONY: all clean
 all: ${all}
 clean:
-	rm -f ${all} *.o *.d
+	rm -f ${all} *.o *.d result/*.jpg runnable_trace/*
 
 obj-mytool = mytool.o
-mytool: ${obj-mytool}
+mytool: ${video-p} ${obj-mytool} 
 
 
 # dependency discovery
