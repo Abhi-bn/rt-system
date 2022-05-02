@@ -112,7 +112,7 @@ void RT_SVM::inference(const cv::Mat& input, const cv::Mat& forground, cv::Mat& 
     }
 
     for (size_t i = 0; i < obj_locations.size(); i++) {
-        rectangle(drawing, obj_locations[i], cv::Scalar(255, 0, 0));
+        rectangle(drawing, obj_locations[i], cv::Scalar(0, 0, 255), 4);
     }
     output = drawing;
     // imshow("gray", forground);

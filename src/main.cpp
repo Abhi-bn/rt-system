@@ -4,10 +4,7 @@
  * Author: Abhinava B N
  */
 
-#ifdef LITMUS_H
 #include <litmus.h>
-#endif
-
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -34,11 +31,14 @@
 void fetch_frame(ProcessSystem *ps) {
     struct rt_task params;
     init_rt_task_param(&params);
-    params1.exec_cost = ms2ns(100);
-    params1.cpu = 0;
-    params1.period = ms2ns(200);
-    params1.relative_deadline = ms2ns(200);
-    params1.release_policy = TASK_PERIODIC;
+    params.exec_cost = ms2ns(100);
+    // params.cpu = 0;
+    params.priority = 1;
+    params.period = ms2ns(600);
+    params.relative_deadline = ms2ns(600);
+    params.budget_policy = QUANTUM_ENFORCEMENT;
+    params.release_policy = TASK_SPORADIC;
+    params.cls = RT_CLASS_HARD;
 
     CALL(set_rt_task_param(gettid(), &params));
     CALL(task_mode(LITMUS_RT_TASK));
@@ -47,48 +47,45 @@ void fetch_frame(ProcessSystem *ps) {
     do {
         sleep_next_period();
         ps->get_frame();
-        std::cout << "Done job1" << std::endl;
     } while (!ps->should_exit());
 }
 void fetch_foreground(ProcessSystem *ps) {
     struct rt_task params;
     init_rt_task_param(&params);
-    params1.exec_cost = ms2ns(100);
-    params1.cpu = 0;
-    params1.period = ms2ns(200);
-    params1.relative_deadline = ms2ns(200);
-    params1.release_policy = TASK_PERIODIC;
+    params.exec_cost = ms2ns(300);
+    // params.cpu = 1;
+    params.period = ms2ns(600);
+    params.relative_deadline = ms2ns(300);
+    params.budget_policy = QUANTUM_ENFORCEMENT;
+    params.release_policy = TASK_SPORADIC;
+    params.cls = RT_CLASS_HARD;
 
     CALL(set_rt_task_param(gettid(), &params));
     CALL(task_mode(LITMUS_RT_TASK));
     CALL(wait_for_ts_release());
-    int do_exit = 0;
     do {
         sleep_next_period();
         ps->get_foreground();
-        std::cout << "Done job2" << std::endl;
-        printf("%d\n", do_exit);
     } while (!ps->should_exit());
 }
 
 void fetch_inference(ProcessSystem *ps) {
     struct rt_task params;
     init_rt_task_param(&params);
-    params1.exec_cost = ms2ns(100);
-    params1.cpu = 0;
-    params1.period = ms2ns(200);
-    params1.relative_deadline = ms2ns(200);
-    params1.release_policy = TASK_PERIODIC;
+    params.exec_cost = ms2ns(300);
+    // params.cpu = 0;
+    params.period = ms2ns(600);
+    params.relative_deadline = ms2ns(300);
+    params.budget_policy = QUANTUM_ENFORCEMENT;
+    params.release_policy = TASK_SPORADIC;
+    params.cls = RT_CLASS_HARD;
 
     CALL(set_rt_task_param(gettid(), &params));
     CALL(task_mode(LITMUS_RT_TASK));
     CALL(wait_for_ts_release());
-    int do_exit = 0;
     do {
         sleep_next_period();
-        ps->get_foreground();
-        std::cout << "Done job2" << std::endl;
-        printf("%d\n", do_exit);
+        ps->inference();
     } while (!ps->should_exit());
 }
 
@@ -96,7 +93,7 @@ int main(int argc, char *argv[]) {
     CALL(init_litmus());
 
     ProcessSystem *ps = new ProcessSystem("result/", "models/HOGModel.svmopencv");
-    ps->load_data("photos/test/*");
+    ps->load_data("data/test/*");
 
     std::thread first(fetch_frame, ps);
     std::thread second(fetch_foreground, ps);
