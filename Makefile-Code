@@ -1,0 +1,11 @@
+INCLUDES = -I src/video-processing/ `pkg-config --cflags --libs opencv4` -I /usr/include/libsvm -pthread
+CC = g++
+COMPILE_FLAGS = -std=c++11 -Wall -g
+SRCS = src/test_thread.cpp src/video-processing/*.cpp
+TARGET = test_runnable
+
+all:
+	$(CC) ${COMPILE_FLAGS} ${SRCS} ${INCLUDES} -o ${TARGET}
+
+clean:
+	rm -r result/* test_runnable
