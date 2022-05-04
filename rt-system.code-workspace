@@ -47,7 +47,9 @@
 			"utility": "cpp",
 			"typeinfo": "cpp",
 			"thread": "cpp",
-			"condition_variable": "cpp"
+			"condition_variable": "cpp",
+			"mutex": "cpp",
+			"system_error": "cpp"
 		}
 	},
 	"tasks": {
