@@ -26,7 +26,8 @@ class ProcessSystem {
     RT_SVM* rt;
     std::vector<cv::String> all_frames;
     int frame_index = 0;
-    std::mutex frame_read, foreground_lock;
+    std::mutex frame_read, foreground_lock, storeImg_lock;
+    std::map<string, cv::Mat> storeImage;
     cv::Mat fresh_frame, fresh_frame_copy, fresh_frame_copy_copy, foreground_frame;
     condition_variable frame_read_var, foreground_frame_var;
 
@@ -74,7 +75,6 @@ class ProcessSystem {
             if (this->frame_index >= this->all_frames.size() - 1) {
                 this->exit = true;
             }
-            cout << "frame number: " + to_string(this->frame_index) << endl;
             this->fresh_frame = cv::imread(this->all_frames[this->frame_index++]);
 #if DEBUG
             this_thread::sleep_for(chrono::seconds(1));
@@ -106,12 +106,7 @@ class ProcessSystem {
     }
 
     void inference() {
-        // waited_execution(this->fresh_frame, this->frame_read, this->frame_read_var, "cascade waiting: inference");
         waited_execution(this->foreground_frame, this->foreground_lock, foreground_frame_var, true, this->fresh_frame_copy, "waiting: inference");
-        // auto update_foreground_frame = [&]() {
-
-        //     this_thread::sleep_for(chrono::seconds(5));
-        // };
         Mat foreground_frame_copy = foreground_frame.clone(), output;
         locked_execution([&]() {
             this->fresh_frame_copy_copy = fresh_frame_copy.clone();
@@ -119,10 +114,44 @@ class ProcessSystem {
             this->foreground_frame.release();
         },
                          foreground_lock, foreground_frame_var, false);
+
         this->rt->inference(this->fresh_frame_copy_copy, foreground_frame_copy, output);
-        imwrite(frame_store_path + std::to_string(frame_index) + ".png", output);
-        // locked_execution(update_foreground_frame, foreground_lock, foreground_frame_var);
+
+        locked_execution([&]() {
+            if (output.empty()) {
+                cout << "inference: wasted!!!" << endl;
+            }
+            cout << "\ninference: frame number: " + to_string(this->frame_index) << endl;
+            auto t = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+            storeImage[to_string(t)] = output.clone();
+        },
+                         storeImg_lock, foreground_frame_var);
         cout << "done: inference" << endl;
+    }
+
+    void store_processed_image() {
+        std::vector<string> removed;
+        for (std::map<string, cv::Mat>::iterator it = storeImage.begin(); it != storeImage.end(); ++it) {
+            string index_number = it->first;
+            Mat get_img = it->second.clone();
+            removed.push_back(index_number);
+            if (get_img.empty()) {
+                cout << "store_processed_image: wasted!!!" << endl;
+                continue;
+            }
+            imwrite(frame_store_path + index_number + ".png", get_img);
+        }
+
+        locked_execution([&]() {
+            string deleted = "";
+            for (int i = 0; i < removed.size(); i++) {
+                storeImage.erase(removed[i]);
+                deleted += " " + removed[i] + " ";
+            }
+            if (removed.size() > 0)
+                cout << "\nstore_processed_image; deleted:" + deleted << endl;
+        },
+                         storeImg_lock, foreground_frame_var);
     }
 };
 #endif /* PROCESS_SYSTEM_H */

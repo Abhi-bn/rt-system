@@ -29,13 +29,13 @@
     } while (0)
 
 void fetch_frame(ProcessSystem *ps) {
+    init_rt_thread();
     struct rt_task params;
     init_rt_task_param(&params);
-    params.exec_cost = ms2ns(100);
-    // params.cpu = 0;
-    params.priority = 1;
-    params.period = ms2ns(600);
-    params.relative_deadline = ms2ns(600);
+    params.exec_cost = ms2ns(30);
+    params.cpu = 0;
+    params.period = ms2ns(200);
+    params.relative_deadline = ms2ns(50);
     params.budget_policy = QUANTUM_ENFORCEMENT;
     params.release_policy = TASK_SPORADIC;
     params.cls = RT_CLASS_HARD;
@@ -50,12 +50,13 @@ void fetch_frame(ProcessSystem *ps) {
     } while (!ps->should_exit());
 }
 void fetch_foreground(ProcessSystem *ps) {
+    init_rt_thread();
     struct rt_task params;
     init_rt_task_param(&params);
-    params.exec_cost = ms2ns(300);
-    // params.cpu = 1;
-    params.period = ms2ns(600);
-    params.relative_deadline = ms2ns(300);
+    params.exec_cost = ms2ns(100);
+    params.cpu = 0;
+    params.period = ms2ns(200);
+    params.relative_deadline = ms2ns(150);
     params.budget_policy = QUANTUM_ENFORCEMENT;
     params.release_policy = TASK_SPORADIC;
     params.cls = RT_CLASS_HARD;
@@ -70,14 +71,15 @@ void fetch_foreground(ProcessSystem *ps) {
 }
 
 void fetch_inference(ProcessSystem *ps) {
+    CALL(init_rt_thread());
     struct rt_task params;
     init_rt_task_param(&params);
-    params.exec_cost = ms2ns(300);
-    // params.cpu = 0;
-    params.period = ms2ns(600);
-    params.relative_deadline = ms2ns(300);
+    params.exec_cost = ms2ns(50);
+    params.cpu = 0;
+    params.period = ms2ns(200);
+    params.relative_deadline = ms2ns(200);
     params.budget_policy = QUANTUM_ENFORCEMENT;
-    params.release_policy = TASK_SPORADIC;
+    params.release_policy = TASK_PERIODIC;
     params.cls = RT_CLASS_HARD;
 
     CALL(set_rt_task_param(gettid(), &params));
@@ -89,16 +91,40 @@ void fetch_inference(ProcessSystem *ps) {
     } while (!ps->should_exit());
 }
 
+void store_image(ProcessSystem *ps) {
+    CALL(init_rt_thread());
+    struct rt_task params;
+    init_rt_task_param(&params);
+    params.exec_cost = ms2ns(100);
+    params.period = ms2ns(100);
+    params.cpu = 1;
+    // params.relative_deadline = ms2ns(300);
+    params.budget_policy = NO_ENFORCEMENT;
+    // params.release_policy = TASK_PERIODIC;
+    params.cls = RT_CLASS_BEST_EFFORT;
+
+    CALL(set_rt_task_param(gettid(), &params));
+    CALL(task_mode(LITMUS_RT_TASK));
+    CALL(wait_for_ts_release());
+    do {
+        sleep_next_period();
+        ps->store_processed_image();
+    } while (!ps->should_exit());
+    ps->store_processed_image();
+}
+
 int main(int argc, char *argv[]) {
     CALL(init_litmus());
 
     ProcessSystem *ps = new ProcessSystem("result/", "models/HOGModel.svmopencv");
     ps->load_data("data/test/*");
 
-    std::thread first(fetch_frame, ps);
-    std::thread second(fetch_foreground, ps);
-    std::thread third(fetch_inference, ps);
-    first.join();
-    second.join();
-    third.join();
+    std::thread T1(fetch_frame, ps);
+    std::thread T2(fetch_foreground, ps);
+    std::thread T3(fetch_inference, ps);
+    std::thread T4(store_image, ps);
+    T1.join();
+    T2.join();
+    T3.join();
+    T4.join();
 }
