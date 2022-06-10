@@ -1,4 +1,4 @@
-INCLUDES = -I src/video-processing/ `pkg-config --cflags --libs opencv4` -I /usr/include/libsvm -pthread
+INCLUDES = -I src/video-processing/ `pkg-config --cflags --libs opencv` -I /usr/include/libsvm -pthread
 CC = g++
 COMPILE_FLAGS = -std=c++11 -Wall -g
 SRCS = src/test_thread.cpp src/video-processing/*.cpp

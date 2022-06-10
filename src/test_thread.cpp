@@ -16,9 +16,9 @@ using namespace std;
 using namespace cv;
 
 void prep_data(vector<std::string>& img_path, vector<float>& labels) {
-    vector<string> pos;
+    vector<String> pos;
     glob("photos/processed/*", pos);
-    vector<string> neg;
+    vector<String> neg;
     glob("photos/neg/*", neg);
 
     for (size_t i = 0; i < pos.size(); i++) {
@@ -34,7 +34,7 @@ void prep_data(vector<std::string>& img_path, vector<float>& labels) {
 
 int main(int argc, char* argv[]) {
     ProcessSystem* ps = new ProcessSystem("result/", "models/HOGModel.svmopencv");
-    ps->load_data("photos/test/*");
+    ps->load_data("data/test/*");
     for (int i = 0; i < 10; i++) {
         thread t1(&ProcessSystem::get_frame, ps);
         thread t2(&ProcessSystem::get_foreground, ps);

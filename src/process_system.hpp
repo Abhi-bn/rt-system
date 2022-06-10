@@ -43,6 +43,7 @@ class ProcessSystem {
     }
 
     void waited_execution(const cv::Mat& frame, std::mutex& locker, condition_variable& var, bool extra = false, const cv::Mat& extra_frame = cv::Mat(), std::string debug = string()) {
+        // return;
         std::unique_lock<mutex> cl(locker);
         var.wait(cl, [&] {
 #if DEBUG
@@ -76,6 +77,7 @@ class ProcessSystem {
                 this->exit = true;
             }
             this->fresh_frame = cv::imread(this->all_frames[this->frame_index++]);
+            resize(this->fresh_frame, this->fresh_frame, cv::Size(), 0.7, 0.7);
 #if DEBUG
             this_thread::sleep_for(chrono::seconds(1));
 #endif

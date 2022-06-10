@@ -35,7 +35,7 @@ all = mytool
 .PHONY: all clean
 all: ${all}
 clean:
-	rm -f ${all} *.o *.d result/*.jpg runnable_trace/*
+	rm -f ${all} *.o *.d runnable result/*.jpg runnable_trace/*
 
 obj-mytool = mytool.o
 mytool: ${video-p} ${obj-mytool} 
