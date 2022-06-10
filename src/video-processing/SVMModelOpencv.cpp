@@ -15,10 +15,12 @@ bool SVMModelOpencv::isEmpty() { return this->svm == nullptr; }
 
 void SVMModelOpencv::training(std::vector<float> labels,
                               std::vector<std::vector<float>> embds) {
-    svm->setType(cv::ml::SVM::C_SVC);
+        svm->setType(cv::ml::SVM::C_SVC);
     svm->setC(10);
     svm->setKernel(cv::ml::SVM::LINEAR);
     svm->setTermCriteria(TermCriteria(TermCriteria::MAX_ITER, 1000, 1e-6));
+    svm->setNu(0.001);
+
     std::vector<float> info;
     info.push_back((float)std::count(labels.begin(), labels.end(), 1) / (float)labels.size());
     info.push_back((float)std::count(labels.begin(), labels.end(), -1) / (float)labels.size());
@@ -28,7 +30,6 @@ void SVMModelOpencv::training(std::vector<float> labels,
         weights.at<float>(0, i) = info[i];
     }
     svm->setClassWeights(weights);
-    svm->setNu(0.001);
 
     cv::Mat matAngles(embds.size(), embds.at(0).size(), CV_32FC1);
     for (int i = 0; i < matAngles.rows; ++i)
