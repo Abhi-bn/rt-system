@@ -14,10 +14,6 @@
 
 #include "process_system.hpp"
 
-#define PERIOD ms2ns(1000)
-#define DEADLINE ms2ns(1500)
-#define EXEC_COST ms2ns(500)
-
 #define CALL(exp)                                     \
     do {                                              \
         int ret;                                      \
@@ -32,10 +28,10 @@ void fetch_frame(ProcessSystem *ps) {
     init_rt_thread();
     struct rt_task params;
     init_rt_task_param(&params);
-    params.exec_cost = ms2ns(30);
+    params.exec_cost = ms2ns(10);
     params.cpu = 0;
-    params.period = ms2ns(200);
-    params.relative_deadline = ms2ns(50);
+    params.period = ms2ns(33);
+    params.relative_deadline = ms2ns(15);
     params.budget_policy = QUANTUM_ENFORCEMENT;
     params.release_policy = TASK_SPORADIC;
     params.cls = RT_CLASS_HARD;
@@ -53,10 +49,10 @@ void fetch_foreground(ProcessSystem *ps) {
     init_rt_thread();
     struct rt_task params;
     init_rt_task_param(&params);
-    params.exec_cost = ms2ns(100);
+    params.exec_cost = ms2ns(13);
     params.cpu = 0;
-    params.period = ms2ns(200);
-    params.relative_deadline = ms2ns(150);
+    params.period = ms2ns(33);
+    params.relative_deadline = ms2ns(28);
     params.budget_policy = QUANTUM_ENFORCEMENT;
     params.release_policy = TASK_SPORADIC;
     params.cls = RT_CLASS_HARD;
@@ -74,10 +70,10 @@ void fetch_inference(ProcessSystem *ps) {
     CALL(init_rt_thread());
     struct rt_task params;
     init_rt_task_param(&params);
-    params.exec_cost = ms2ns(50);
+    params.exec_cost = ms2ns(10);
     params.cpu = 0;
-    params.period = ms2ns(200);
-    params.relative_deadline = ms2ns(200);
+    params.period = ms2ns(33);
+    params.relative_deadline = ms2ns(33);
     params.budget_policy = QUANTUM_ENFORCEMENT;
     params.release_policy = TASK_PERIODIC;
     params.cls = RT_CLASS_HARD;
@@ -95,9 +91,9 @@ void store_image(ProcessSystem *ps) {
     CALL(init_rt_thread());
     struct rt_task params;
     init_rt_task_param(&params);
-    params.exec_cost = ms2ns(100);
-    params.period = ms2ns(100);
-    params.cpu = 1;
+    params.exec_cost = ms2ns(33);
+    params.period = ms2ns(33);
+    params.cpu = 2;
     // params.relative_deadline = ms2ns(300);
     params.budget_policy = NO_ENFORCEMENT;
     // params.release_policy = TASK_PERIODIC;
